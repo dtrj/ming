@@ -1,0 +1,28 @@
+#include <stdio.h>
+#include <string.h>
+struct Sutdent
+{
+	char sutdent_ID[17];
+	int seat1;
+	int seat2;
+}student[1000];
+int main()
+{
+	
+	int i, j, n, a;
+	printf("考生数：");
+	scanf("%d", &a);
+	for (i = 0; i < a; i++)
+	{
+		scanf("%s %d %d", &student[i].sutdent_ID, &student[i].seat1, &student[i].seat2);
+	}
+	
+	printf("请输入试机号");
+	scanf("%d",&n);
+		int M;
+		for (j = 0; j< a; j++)
+		{
+			if (n== student[j].seat1)
+			{
+				M = j; break;
+			}
