@@ -1,0 +1,512 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include<windows.h>
+//账户信息
+struct account
+{
+	char name[100];//姓名
+	char id[100];//身份号
+	char tel[100];//电话
+	char username[100];//账号
+	char password[100];//密码
+	float money;//钱
+
+	struct account *next;
+};
+typedef struct account account;
+account *head = NULL;
+account *tail = NULL;
+account *curAccount = NULL;
+
+
+//消费信息
+struct TransactionRecord
+{
+	char username[100];//用户
+	time_t timestamp;//时间戳 
+	int type;//交易类型 0-取钱，1-存钱
+	float amount;//数额 
+
+	struct TransactionRecord * next;
+};
+typedef struct TransactionRecord TR;
+
+TR * trHead = NULL;
+TR * trTail = NULL;
+
+//转账信息
+struct zhuanzhang
+{
+	char username_a[100];//转钱用户
+	char username_b[100];//接收用户
+	time_t times;//时间戳 
+	int type;//交易类型 0-取钱，1-存钱  ，2-转账
+	float amount;//数额 
+
+	struct zhuanzhang* next;
+};
+typedef struct zhuanzhang zz;
+
+zz * Head = NULL;
+zz * Tail = NULL;
+
+
+void addNode(account *node)
+{
+	//头尾指针赋值
+	if (head == NULL)
+	{
+		head = node;
+		tail = node;
+	}
+	else
+	{
+		tail->next = node;
+		tail = node;
+	}
+}
+
+
+int loateDate()
+{
+	//加载数据
+	FILE *fp = fopen("D:\\编程作业\\第二学期\\ATM\\file.txt", "r");
+	if (fp != NULL)
+	{
+		//判断有无结束（没0）自己会移动
+		while (!feof(fp))
+		{
+			//定义一个new的动态申请的空间（保留一空间）
+			account *newb = (account*)malloc(sizeof(account));
+			fscanf(fp, "%s\t%s\t%s\t%s\t%s\t%f\t\n", newb->name, newb->id, newb->tel, newb->username, newb->password, &newb->money);
+
+			addNode(newb);
+		}
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+	fclose(fp);
+}
+
+
+void printLinkedList()
+{
+	system("cls");//清屏
+				  //输出加载数据
+	account *curP = head;
+	while (curP != NULL)
+	{
+		printf("%s\t%s\t%s\t%s\t%s\t%f\n", curP->name, curP->id, curP->tel, curP->username, curP->password, curP->money);
+		curP = curP->next;
+	}
+}
+
+void exitFunction()
+{
+	//储存
+	FILE* fp = fopen("D:\\编程作业\\第二学期\\ATM\\file.txt", "w");
+	account * curP = head;
+	while (curP != NULL)
+	{
+		fprintf(fp, "%s\t%s\t%s\t%s\t%s\t%f\t\n", curP->name, curP->id, curP->tel, curP->username, curP->password, &curP->money);
+		curP = curP->next;
+	}
+	fclose(fp);
+	exit(0);
+}
+
+
+
+void kaihu()//开户
+{
+	system("cls");//清屏
+				  //定义一个newm的动态申请的空间（保留一空间）
+	account * newm = (account *)malloc(sizeof(account));
+
+	printf("亲输入姓名:\n");
+	scanf("%s", newm->name);
+	getchar();
+
+	printf("亲输入身份证号:\n");
+	scanf("%s", newm->id);
+	getchar();
+
+	printf("亲输入电话:\n");
+	scanf("%s", newm->tel);
+	getchar();
+
+	printf("亲输入账号:\n");
+	scanf("%s", newm->username);
+	getchar();
+
+	printf("请输入密码:\n");
+	scanf("%s", newm->password);
+	getchar();
+
+
+	addNode(newm);
+	newm->next = NULL;
+
+	printf("创建成功！\n");
+	system("pause");
+}
+
+//判断是否真确
+int chaxunG()
+{
+
+	account * curb = head;
+	account a;
+	printf("请输入账号\n");
+	scanf("%s", a.username);
+	printf("请输入密码\n");
+	scanf("%s", a.password);
+	while (curb != NULL)
+	{
+		int m, n;
+
+		m = strcmp(curb->username, a.username);
+		n = strcmp(curb->username, a.password);
+		if (m == 0 && n == 0)
+		{
+			//登录成功
+			printf("登录成功\n");
+			curAccount = curb;
+			return 1;
+		}
+		curb = curb->next;
+	}
+	printf("错误，如果重新输入\n");
+	return 0;
+}
+
+//修改密码
+void gaimima()
+{
+	system("cls");//清屏
+	printf("请输入旧密码:\n");
+	char oldPassword[100] = { '\0' };
+	scanf("%s", oldPassword);
+	if (strcmp(oldPassword, curAccount->password) == 0)
+	{
+		//让其修改 
+		printf("请输入新密码：\n");
+		scanf("%s", curAccount->password);
+		printf("修改成功！\n");
+	}
+	else
+	{
+		printf("旧密码输入错误，拒绝修改！\n");
+	}
+}
+
+//登录
+int  chanxun()
+{
+	int t;
+	for (t = 0;t<3;t++)
+	{
+		if (chaxunG() == 1)
+		{
+			//登录成功
+			printf("登录成功\n");
+			return 1;
+		}
+		else
+		{
+			//登录失败
+			printf("登录失败\n");
+
+		}
+	}
+	return 0;
+}
+
+
+
+//保存消费信息
+void saveTransactionRecord()
+{
+	FILE* fp = fopen("D://transation.txt", "w");
+	TR* curP = trHead;
+	while (curP != NULL)
+	{
+		fprintf(fp, "%s %ld %d %f", curP->username, curP->timestamp, curP->type, curP->amount);
+		curP = curP->next;
+	}
+	fclose(fp);
+}
+
+
+//取款
+void darwMoney()
+{
+	system("cls");//清屏
+	printf("请输入取款金额\n");
+	float money;
+	scanf("%d", &money);
+	if (curAccount->money>money)
+	{
+		printf("取款成功");
+		curAccount->money = curAccount->money - money;
+
+		//记录交易记录 创建结点，赋值初始化，添加结点到链表
+		TR * newNode = (TR*)malloc(sizeof(TR));
+
+		newNode->next = NULL;
+		strcpy(newNode->username, curAccount->username);
+		newNode->type = 0;
+		newNode->amount = money;
+		newNode->timestamp = time(NULL);
+		//头尾指针赋值
+		newNode->next = NULL;
+		if (trHead == NULL)
+		{
+			trHead = newNode;
+			trTail = newNode;
+		}
+		else
+		{
+			trTail->next = newNode;
+			trTail = newNode;
+		}
+	}
+	else
+	{
+		printf("余额不足\n");
+	}
+}
+
+//存款
+void saveMoney()
+{
+	system("cls");//清屏
+	printf("请输入存款金额\n");
+	float money;
+	scanf("%d", &money);
+	printf("存款成功");
+	curAccount->money = money + curAccount->money;
+
+
+	//记录交易记录 创建结点，赋值初始化，添加结点到链表
+	TR * newNode = (TR*)malloc(sizeof(TR));
+
+	newNode->next = NULL;
+	strcpy(newNode->username, curAccount->username);
+	newNode->type = 1;
+	newNode->amount = money;
+	newNode->timestamp = time(NULL);
+
+
+	//头尾指针赋值
+	newNode->next = NULL;
+	if (trHead == NULL)
+	{
+		trHead = newNode;
+		trTail = newNode;
+	}
+	else
+	{
+		trTail->next = newNode;
+		trTail = newNode;
+	}
+
+}
+
+
+
+//查找账户
+account * findOtherAccount(char otherUsername[])
+{
+	account * curp = head;
+	while (curp != NULL)
+	{
+		if (strcmp(curp->username, otherUsername) == 0)
+		{
+			return curp;
+		}
+		curp = curp->next;
+	}
+	return NULL;
+}
+
+
+
+//保存转账信息
+void saveRecord()
+{
+	FILE* fp = fopen("D:/transation_record.txt", "w");
+	zz* curP = Head;
+	while (curP != NULL)
+	{
+		fprintf(fp, "%s %s %ld %d %f", curP->username_a, curP->username_b, curP->times, curP->type, curP->amount);
+		curP = curP->next;
+	}
+	fclose(fp);
+}
+
+
+//转账
+void transfer()
+{
+	system("cls");//清屏
+	printf("请输入对方账户：");
+	char otherUsername[100];
+	scanf("%s", otherUsername);
+	account * otherAccount = findOtherAccount(otherUsername);
+	if (otherAccount == NULL)
+	{
+		printf("账户不存在！\n");
+	}
+	else
+	{
+		printf("请输入转账金额：");
+		float money;
+		scanf("%d", &money);
+
+		//当前账户余额变化：减少 
+		curAccount->money = curAccount->money - money;
+		//对方账户余额变化：增加
+		otherAccount->money = otherAccount->money + money;
+
+		printf("转账成功！");
+
+		//转账记录.... 
+		zz * NEW = (zz*)malloc(sizeof(TR));
+
+		NEW->next = NULL;
+		strcpy(NEW->username_a, curAccount->username);
+		strcpy(NEW->username_b, otherAccount->username);
+		NEW->type = 2;
+		NEW->amount = money;
+		NEW->times = time(NULL);
+
+
+		//头尾指针赋值
+		NEW->next = NULL;
+		if (trHead == NULL)
+		{
+			Head = NEW;
+			Tail = NEW;
+		}
+		else
+		{
+			Tail->next = NEW;
+			Tail = NEW;
+		}
+
+
+	}
+}
+
+
+void main()
+{
+	int i = 0;
+	char c;
+	while (i == 0)
+	{
+		system("cls");//清屏
+		int a = loateDate();//加载数据
+		if (a == 1)
+		{
+			printf("加载成功\n");
+		}
+		else
+		{
+			printf("加载失败\n");
+		}
+		printf("按1，如果你先开户\n");
+		printf("按2，如果你先登录用户\n");
+		printf("按3，转化为英文\n");
+		system("color 03");
+
+		scanf("%c", &c);
+		if (c == '1')
+		{
+			//开户
+			kaihu();
+			exitFunction();
+		}
+		else
+		{
+			if (c == '2')
+			{
+				//查询登录
+				if (chanxun() == 1)
+				{
+					int s=2;
+					while (s==2)
+					{
+						int p;
+						printf("如果改密码输入1\n，转账输入2\n，取钱输入3\n，存款输入4\n，否退出输入0：");
+						system("color 06");
+						scanf("%d", &p);
+						getchar();
+						system("cls");//清屏
+						if (p == 1)
+						{
+							//改密码
+							gaimima();
+						}
+						else
+						{
+							if (p == 2)
+							{
+								//转账
+								transfer();
+								saveRecord();
+
+							}
+							else
+							{
+								if (p == 3)
+								{
+									//取钱
+									darwMoney();
+									saveTransactionRecord();
+								}
+								else
+								{
+									if (p == 4)
+									{
+										//存款
+										saveMoney();
+										saveTransactionRecord();
+									}
+									else
+									{
+										break;
+									}
+
+								}
+								//保存消费信息
+								saveTransactionRecord();
+							}
+						}
+						printf("返回主页(退出)输入0,继续操作2\n");
+						scanf("%d", &s);
+						getchar();
+					}
+				}
+			}
+			else
+			{
+				//转为英文
+			}
+
+		}
+		printf("结束输入2,否则0\n");
+		scanf("%d", &i);
+		getchar();
+	}
+	//输出数据
+	printLinkedList();
+	exitFunction();
+
+}
